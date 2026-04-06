@@ -3,6 +3,7 @@ package resp
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -211,21 +212,21 @@ func (r *RESPParser) handlePSYNC() string {
 	masterReplId := r.client.Server.Config.Replid
 
 	// Open empty.rdb only as a placeholder for now
-	// data, err := os.ReadFile("empty.rdb")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	data, err := os.ReadFile("empty.rdb")
+	if err != nil {
+		panic(err)
+	}
 
-	// fileSize := len(data)
+	fileSize := len(data)
 
 	r.client.Server.ReplicaMu.Lock()
 	defer r.client.Server.ReplicaMu.Unlock()
 	r.client.Server.Replicas = append(r.client.Server.Replicas, r.client)
 
 	// FULLRESYNC + bulk string header + raw bytes
-	return "+FULLRESYNC " + masterReplId + " 0\r\n"
-	// "$" + strconv.Itoa(fileSize) + "\r\n" +
-	// string(data)
+	return "+FULLRESYNC " + masterReplId + " 0\r\n" +
+		"$" + strconv.Itoa(fileSize) + "\r\n" +
+		string(data)
 }
 
 func (r *RESPParser) handleCommandSelection() string {
