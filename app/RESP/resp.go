@@ -316,7 +316,7 @@ func parseArray(line string, reader *bufio.Reader, c *types.ClientState) (string
 
 	parser := NewRESPParser(commandArray, c)
 
-	// c.Server.AddOffsetToServer(commandByteLength)
+	c.Server.AddOffsetToServer(commandByteLength)
 	//a
 
 	if c.InTransaction {
