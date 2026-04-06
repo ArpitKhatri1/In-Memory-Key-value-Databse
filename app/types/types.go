@@ -35,10 +35,9 @@ type ServerState struct {
 }
 
 type ClientState struct {
-	Server       *ServerState
-	ConnectionId net.Conn
-	Id           int
-
+	Server           *ServerState
+	ConnectionId     net.Conn
+	Id               int
 	InTransaction    bool
 	TransactionQueue [][]string
 }

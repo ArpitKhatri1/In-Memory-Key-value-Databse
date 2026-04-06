@@ -309,6 +309,8 @@ func (r *RESPParser) handleWAIT() string {
 		time.Sleep(10 * time.Millisecond)
 	}
 
+	// control comes here after the deadline is over
+
 	r.client.Server.ReplicaMu.Lock()
 	r.client.Server.LastWaitOffset = targetOffset
 	r.client.Server.ReplicaMu.Unlock()
