@@ -201,7 +201,8 @@ func (r *RESPParser) handleREPLCONF(offset int) string {
 
 	switch secondParam {
 	case "getack":
-		return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n" + strconv.Itoa(r.client.Server.Config.ReplOffset-offset) + "\r\n"
+		// return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n" + strconv.Itoa(r.client.Server.Config.ReplOffset-offset) + "\r\n"
+		return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n"
 	default:
 		return returnOKStatus()
 	}
