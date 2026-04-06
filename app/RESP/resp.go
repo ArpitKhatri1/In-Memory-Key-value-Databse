@@ -236,6 +236,10 @@ func (r *RESPParser) handlePSYNC() string {
 		string(data)
 }
 
+func (r *RESPParser) handleWAIT() string {
+	return ":0"
+}
+
 func (r *RESPParser) handleCommandSelection() string {
 	switch r.command {
 	case ECHO:
@@ -357,6 +361,8 @@ func parseArray(line string, reader *bufio.Reader, c *types.ClientState) (string
 		return parser.handleREPLCONF(commandByteLength), nil
 	case PSYNC:
 		return parser.handlePSYNC(), nil
+	case WAIT:
+		return parser.handleWAIT(), nil
 	default:
 		return returnRESPErrorString("unknown command '" + parser.command + "'"), nil
 	}

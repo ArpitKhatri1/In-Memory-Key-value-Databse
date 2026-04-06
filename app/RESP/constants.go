@@ -20,4 +20,5 @@ const (
 	INFO     = "info"
 	REPLCONF = "replconf"
 	PSYNC    = "psync"
+	WAIT     = "wait"
 )
