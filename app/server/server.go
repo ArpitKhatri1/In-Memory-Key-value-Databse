@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	resp "github.com/codecrafters-io/redis-starter-go/app/RESP"
@@ -138,7 +139,13 @@ func (s *Server) InitializeReplicantHandshake() { // this server pointer is of r
 			return // Stop the loop
 		}
 
-		_ = output
+		if strings.HasPrefix(output, "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n") {
+			_, err := conn.Write([]byte(output))
+			if err != nil {
+				fmt.Printf("Error writing ACK to master: %v\n", err)
+				return
+			}
+		}
 
 	}
 

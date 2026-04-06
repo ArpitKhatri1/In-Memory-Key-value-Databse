@@ -196,16 +196,22 @@ func (r *RESPParser) handleINFO() string {
 }
 
 func (r *RESPParser) handleREPLCONF(offset int) string {
+	if len(r.commandArray) < 2 {
+		return returnRESPErrorString("wrong number of arguments for 'replconf' command")
+	}
 
-	// secondParam := r.commandArray[1]
-	return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n"
-	// switch secondParam {
-	// case "getack":
-	// 	// return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n" + strconv.Itoa(r.client.Server.Config.ReplOffset-offset) + "\r\n"
-	// 	return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n"
-	// default:
-	// 	return returnOKStatus()
-	// }
+	secondParam := strings.ToLower(r.commandArray[1])
+	switch secondParam {
+	case "getack":
+		ackOffset := r.client.Server.Config.ReplOffset - offset
+		if ackOffset < 0 {
+			ackOffset = 0
+		}
+		ackOffsetStr := strconv.Itoa(ackOffset)
+		return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$" + strconv.Itoa(len(ackOffsetStr)) + "\r\n" + ackOffsetStr + "\r\n"
+	default:
+		return returnOKStatus()
+	}
 
 }
 
