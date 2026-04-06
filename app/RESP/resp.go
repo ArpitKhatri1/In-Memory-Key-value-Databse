@@ -316,8 +316,9 @@ func parseArray(line string, reader *bufio.Reader, c *types.ClientState) (string
 
 	parser := NewRESPParser(commandArray, c)
 
-	c.Server.AddOffsetToServer(commandByteLength)
-	//a
+	if c.Server.Config.Role == "slave" && c.Id == -1 {
+		c.Server.AddOffsetToServer(commandByteLength)
+	}
 
 	if c.InTransaction {
 		switch parser.command {
