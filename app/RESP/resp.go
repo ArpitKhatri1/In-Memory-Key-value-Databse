@@ -225,8 +225,8 @@ func (r *RESPParser) handlePSYNC() string {
 
 	// FULLRESYNC + bulk string header + raw bytes
 	return "+FULLRESYNC " + masterReplId + " 0\r\n" +
-		"$" + strconv.Itoa(fileSize) + "\r\n" +
-		string(data)
+		// "$" + strconv.Itoa(fileSize) + "\r\n" +
+		// string(data)
 }
 
 func (r *RESPParser) handleCommandSelection() string {
