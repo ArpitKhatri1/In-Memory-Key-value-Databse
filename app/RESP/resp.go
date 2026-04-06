@@ -87,7 +87,6 @@ func (r *RESPParser) handleSETUnlocked() string {
 		Value:    keyValue,
 		ExpireAt: expireAt,
 	}
-	//test
 
 	r.client.Server.Store[key] = value
 
@@ -209,6 +208,22 @@ func (r *RESPParser) handleREPLCONF(offset int) string {
 		}
 		ackOffsetStr := strconv.Itoa(ackOffset)
 		return "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$" + strconv.Itoa(len(ackOffsetStr)) + "\r\n" + ackOffsetStr + "\r\n"
+	case "ack":
+		if len(r.commandArray) < 3 {
+			return returnRESPErrorString("wrong number of arguments for 'replconf ack' command")
+		}
+
+		ackOffset, err := strconv.Atoi(r.commandArray[2])
+		if err != nil {
+			return returnRESPErrorString("invalid replconf ack offset")
+		}
+
+		r.client.Server.ReplicaMu.Lock()
+		r.client.Server.ReplicaAckBytes[r.client.Id] = ackOffset
+		r.client.Server.ReplicaMu.Unlock()
+
+		// Master should not send a response for replica ACK updates.
+		return ""
 	default:
 		return returnOKStatus()
 	}
@@ -229,6 +244,7 @@ func (r *RESPParser) handlePSYNC() string {
 	r.client.Server.ReplicaMu.Lock()
 	defer r.client.Server.ReplicaMu.Unlock()
 	r.client.Server.Replicas = append(r.client.Server.Replicas, r.client)
+	r.client.Server.ReplicaAckBytes[r.client.Id] = 0
 
 	// FULLRESYNC + bulk string header + raw bytes
 	return "+FULLRESYNC " + masterReplId + " 0\r\n" +
@@ -237,8 +253,67 @@ func (r *RESPParser) handlePSYNC() string {
 }
 
 func (r *RESPParser) handleWAIT() string {
-	replicas := len(r.client.Server.Replicas)
-	return returnRESPInteger(replicas)
+	if len(r.commandArray) < 3 {
+		return returnRESPErrorString("wrong number of arguments for 'wait' command")
+	}
+
+	requiredReplicas, err := strconv.Atoi(r.commandArray[1])
+	if err != nil || requiredReplicas < 0 {
+		return returnRESPErrorString("value is not an integer or out of range")
+	}
+
+	timeoutMs, err := strconv.Atoi(r.commandArray[2])
+	if err != nil || timeoutMs < 0 {
+		return returnRESPErrorString("value is not an integer or out of range")
+	}
+
+	r.client.Server.ReplicaMu.RLock()
+	replicaCount := len(r.client.Server.Replicas)
+	targetOffset := r.client.Server.ReplicationOffset
+	lastWaitOffset := r.client.Server.LastWaitOffset
+	r.client.Server.ReplicaMu.RUnlock()
+
+	if replicaCount == 0 {
+		return returnRESPInteger(0)
+	}
+
+	if targetOffset <= lastWaitOffset {
+		return returnRESPInteger(replicaCount)
+	}
+
+	getAckCommand := SerializeToRESPOutput([]string{"REPLCONF", "GETACK", "*"})
+	r.client.Server.ReplicaMu.Lock()
+	for _, replica := range r.client.Server.Replicas {
+		_, _ = replica.ConnectionId.Write([]byte(getAckCommand))
+	}
+	r.client.Server.ReplicationOffset += len(getAckCommand)
+	r.client.Server.ReplicaMu.Unlock()
+
+	deadline := time.Now().Add(time.Duration(timeoutMs) * time.Millisecond)
+	ackedReplicas := 0
+
+	for {
+		r.client.Server.ReplicaMu.RLock()
+		ackedReplicas = 0
+		for _, replica := range r.client.Server.Replicas {
+			if r.client.Server.ReplicaAckBytes[replica.Id] >= targetOffset {
+				ackedReplicas++
+			}
+		}
+		r.client.Server.ReplicaMu.RUnlock()
+
+		if ackedReplicas >= requiredReplicas || time.Now().After(deadline) {
+			break
+		}
+
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	r.client.Server.ReplicaMu.Lock()
+	r.client.Server.LastWaitOffset = targetOffset
+	r.client.Server.ReplicaMu.Unlock()
+
+	return returnRESPInteger(ackedReplicas)
 }
 
 func (r *RESPParser) handleCommandSelection() string {

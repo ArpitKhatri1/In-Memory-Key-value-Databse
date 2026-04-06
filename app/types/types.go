@@ -25,8 +25,12 @@ type ServerState struct {
 	Store   map[string]KVV
 	StoreMu sync.RWMutex
 
+	ReplicationOffset int
+	LastWaitOffset    int
+
 	Replicas        []*ClientState
 	ReplicaMu       sync.RWMutex
+	ReplicaAckBytes map[int]int
 	PropagationChan chan []string
 }
 

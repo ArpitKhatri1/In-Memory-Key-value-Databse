@@ -46,7 +46,10 @@ func NewServer(config *types.ServerConfig) *Server {
 	serverState := &types.ServerState{
 		Config:          config,
 		Store:           make(map[string]types.KVV),
+		ReplicationOffset: 0,
+		LastWaitOffset:    0,
 		Replicas:        make([]*types.ClientState, 0), //not some number because it will create nil array causing the functionss to panic and throw an error
+		ReplicaAckBytes: make(map[int]int),
 		PropagationChan: make(chan []string, 100),
 	}
 
@@ -139,6 +142,7 @@ func (s *Server) InitializeReplicantHandshake() { // this server pointer is of r
 			return // Stop the loop
 		}
 
+		// replicas writing back to master
 		if strings.HasPrefix(output, "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n") {
 			_, err := conn.Write([]byte(output))
 			if err != nil {
@@ -162,6 +166,7 @@ func (s *Server) handlePropagation() {
 		}
 
 		respString := resp.SerializeToRESPOutput(commandArray)
+		s.ReplicationOffset += len(respString)
 		fmt.Println(respString)
 		for _, client := range s.Replicas {
 			// fire and forget pattern
