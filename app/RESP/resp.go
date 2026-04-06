@@ -68,7 +68,7 @@ func (r *RESPParser) handleSETUnlocked() string {
 	var expireAt time.Time
 
 	if len(r.commandArray) >= 4 {
-		option := r.commandArray[3]
+		option := strings.ToLower(r.commandArray[3])
 		switch option {
 		case "px":
 			if len(r.commandArray) < 5 {
