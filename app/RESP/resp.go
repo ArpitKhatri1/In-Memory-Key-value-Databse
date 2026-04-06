@@ -237,7 +237,7 @@ func (r *RESPParser) handlePSYNC() string {
 }
 
 func (r *RESPParser) handleWAIT() string {
-	return ":0"
+	return returnRESPInteger(0)
 }
 
 func (r *RESPParser) handleCommandSelection() string {
