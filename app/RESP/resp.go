@@ -237,7 +237,8 @@ func (r *RESPParser) handlePSYNC() string {
 }
 
 func (r *RESPParser) handleWAIT() string {
-	return returnRESPInteger(0)
+	replicas := len(r.client.Server.Replicas)
+	return returnRESPInteger(replicas)
 }
 
 func (r *RESPParser) handleCommandSelection() string {
