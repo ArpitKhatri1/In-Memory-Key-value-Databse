@@ -287,7 +287,7 @@ func SerializeToRESPOutput(commandArray []string) string {
 }
 
 func parseArray(line string, reader *bufio.Reader, c *types.ClientState) (string, error) {
-	commandByteLength := len(line) + 3
+	commandByteLength := len(line) + 2
 	commandLength, err := strconv.Atoi(line[1:])
 	if err != nil {
 		return "", err
