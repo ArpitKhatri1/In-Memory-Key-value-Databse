@@ -80,7 +80,7 @@ func (r *RESPParser) handleSETUnlocked() string {
 				return returnRESPErrorString("value is not an integer or out of range")
 			}
 			expireAt = time.Now().Add(formattedTime)
-		}q
+		}
 	}
 
 	value = types.KVV{
