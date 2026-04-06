@@ -224,7 +224,7 @@ func (r *RESPParser) handlePSYNC() string {
 	r.client.Server.Replicas = append(r.client.Server.Replicas, r.client)
 
 	// FULLRESYNC + bulk string header + raw bytes
-	return "+FULLRESYNC " + masterReplId + " 0\r\n" +
+	return "+FULLRESYNC " + masterReplId + " 0\r\n" 
 		// "$" + strconv.Itoa(fileSize) + "\r\n" +
 		// string(data)
 }
